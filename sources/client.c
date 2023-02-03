@@ -6,11 +6,21 @@
 /*   By: lmedeiro <lmedeiro@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/01/31 22:36:00 by lmedeiro          #+#    #+#             */
-/*   Updated: 2023/02/01 00:20:12 by lmedeiro         ###   ########.fr       */
+/*   Updated: 2023/02/03 21:44:29 by lmedeiro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minitalk.h"
+
+int	g_stay;
+
+static void	signal_receive(int signal)
+{
+	if (signal == SIGUSR1)
+		g_stay = 0;
+	else
+		printf("Message sent successfully!\n");
+}
 
 void	error(char *message)
 {
@@ -19,7 +29,7 @@ void	error(char *message)
 }
 
 // Essa função checa se o argumento é o argumeto é valido. No caso, o argv[1]. 
-// Checa se é maior que 7 ou se é letra (isdigit)
+// Checa se é maior que 7 ou se 3é letra (isdigit)
 
 static int	check_args(char *pid)
 {
@@ -38,67 +48,51 @@ static int	check_args(char *pid)
 
 // Faz a conversão dos bits e manda essa conversão pro server.
 
-void    send_char(pid_t pid, char *message)
+static void	send_signal(int pid, char msg)
 {
-	int	i;
-	int	kill_status;
-	int	bits_shifted; //conta os bits deslocados.
+	int	count_bits;
 
-	i = 0;
-	while (message[i] != '\0')
+	count_bits = 0;
+	while (count_bits < 8)
 	{
-		bits_shifted = 0;
-		while (bits_shifted < 8)
+		if (g_stay == 0)
 		{
-			if ((message[i] >> bits_shifted) & 0b00000001)
-				kill_status = kill(pid SIGUSR1); //1
+			g_stay = 1;
+			if ((msg >> count_bits) & 0b00000001)
+			{
+				if (kill(pid, SIGUSR1))
+					error("Failed to send signal.\n");
+			}
 			else
-				kill_status = kill(pid, SIGUSR2); //0
-			if (kill_status == -1)
-				error("kill error.\n");
-			bits_shifted++;
-			usleep(500); 
+			{
+				if (kill(pid, SIGUSR2))
+					error("Failed to send signal.\n");
+			}
+			count_bits++;
 		}
-		i++;
 	}
 }
-
-
-//int main(int argc, char **argv)
-//{
-    
-  //  pid_t pid; //é da própria biblioteca.
-    
-   // if (argc != 3)
-    //    error("Invalid number of arguments.\n");
-   // if (ft_strlen(argv[1]) > 7 || check_args(argv[1]))
-   //     error("Invalid PID.\n");
-  //  pid = ft_atoi(argv[1]); //pq faz aqui? pq escreve de um pra outro??? 
-   // send_char(pid, argv[2]);
-   //// return(0);
-//}
 
 int	main(int argc, char **argv)
 {
 	struct sigaction	action;
 	pid_t				pid;
 
-	g_char = 0;
-	pid = ft_atoi(argv[1]);
 	if (argc != 3)
 		error("Invalid number of arguments.\n");
 	if (ft_strlen(argv[1]) > 7 || check_args(argv[1]))
 		error("Invalid PID.\n");
+	pid = ft_atoi(argv[1]);
 	ft_bzero(&action, sizeof (struct sigaction));
-	action.sa_handler = &print_char;
+	action.sa_handler = &signal_receive;
 	sigaction(SIGUSR1, &action, NULL);
 	sigaction(SIGUSR2, &action, NULL);
 	while (*argv[2])
 	{
-		tell_signal(pid, *argv[2]);
+		send_signal(pid, *argv[2]);
 		argv[2]++;
 	}	
-	send_char(pid, '\n');
-	send_char(pid, '\0');
+	send_signal(pid, '\n'); 
+	send_signal(pid, '\0');
 	usleep(100);
 }

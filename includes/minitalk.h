@@ -6,7 +6,7 @@
 /*   By: lmedeiro <lmedeiro@student.42sp.org.br>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/01/31 22:37:27 by lmedeiro          #+#    #+#             */
-/*   Updated: 2023/02/01 00:40:56 by lmedeiro         ###   ########.fr       */
+/*   Updated: 2023/02/03 21:46:42 by lmedeiro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,27 +49,27 @@ int	ft_isdigit(int c)
 		return (0);
 }
 
-int	ft_atoi(const char *str)
+int	ft_atoi(const char *nptr)
 {
-	int	nbr;
+	int	result;
 	int	sign;
 
-	nbr = 0;
+	result = 0;
 	sign = 1;
-	while (*str == 32 || (*str > 8 && *str < 14))
-		str++;
-	if ((*str == 45) || (*str == 43))
+	while (*nptr == ' ' || (*nptr >= '\t' && *nptr <= '\r'))
+		nptr++;
+	if (*nptr == '+' || *nptr == '-')
 	{
-		if (*str == 45)
+		if (*nptr == '-')
 			sign = -1;
-		str++;
+		nptr++;
 	}
-	while (ft_isdigit(*str))
+	while (ft_isdigit(*nptr))
 	{
-		nbr = (nbr * 10) + (*str - 48);
-		str++;
+		result = result * 10 + (*nptr - '0');
+		nptr++;
 	}
-	return (nbr * sign);
+	return (result * sign);
 }
 
 	void	*ft_memset(void *s, int c, size_t n)
@@ -87,17 +87,9 @@ int	ft_atoi(const char *str)
 	return (s);
 }
 
-
 void	ft_bzero(void *s, size_t n)
 {
 	ft_memset (s, '\0', n);
 }
-
-
-typedef struct s_char
-{
-	int		bits_shifted;
-	char	str;
-}			t_char;
 
 #endif
