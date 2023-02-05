@@ -3,17 +3,19 @@
 /*                                                        :::      ::::::::   */
 /*   client.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lmedeiro <lmedeiro@student.42sp.org.br>    +#+  +:+       +#+        */
+/*   By: luanny <luanny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/01/31 22:36:00 by lmedeiro          #+#    #+#             */
-/*   Updated: 2023/02/03 21:44:29 by lmedeiro         ###   ########.fr       */
+/*   Updated: 2023/02/05 19:46:19 by luanny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "../includes/minitalk.h"
 
 int	g_stay;
 
+// Essa função vai mandar o aviso que o sinal foi recebido pelo server (bônus)
 static void	signal_receive(int signal)
 {
 	if (signal == SIGUSR1)
@@ -24,12 +26,12 @@ static void	signal_receive(int signal)
 
 void	error(char *message)
 {
-	ft_putstr_fd(message, STDERR_FILENO);
+	ft_putstr_fd(message, STDERR_FILENO); // //é uma MACRO da biblioteca, que seria o 1. A saída (stdout).
 	exit(EXIT_FAILURE);
 }
 
 // Essa função checa se o argumento é o argumeto é valido. No caso, o argv[1]. 
-// Checa se é maior que 7 ou se 3é letra (isdigit)
+// Checa se é maior que 7 ou se é letra (isdigit)
 
 static int	check_args(char *pid)
 {
@@ -76,14 +78,14 @@ static void	send_signal(int pid, char msg)
 int	main(int argc, char **argv)
 {
 	struct sigaction	action;
-	pid_t				pid;
+	pid_t				pid; //struct da biblioteca signal.h
 
 	if (argc != 3)
 		error("Invalid number of arguments.\n");
 	if (ft_strlen(argv[1]) > 7 || check_args(argv[1]))
 		error("Invalid PID.\n");
-	pid = ft_atoi(argv[1]);
-	ft_bzero(&action, sizeof (struct sigaction));
+	pid = ft_atoi(argv[1]); // //o pid vem depois das verificações para evitar erro de leitura e vazamentos (valgrind)
+	ft_bzero(&action, sizeof (struct sigaction)); //iniciamos a struct com bzero para que não haja lixo de memória.
 	action.sa_handler = &signal_receive;
 	sigaction(SIGUSR1, &action, NULL);
 	sigaction(SIGUSR2, &action, NULL);

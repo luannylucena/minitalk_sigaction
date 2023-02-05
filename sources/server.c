@@ -3,19 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   server.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lmedeiro <lmedeiro@student.42sp.org.br>    +#+  +:+       +#+        */
+/*   By: luanny <luanny@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/03 18:20:34 by lmedeiro          #+#    #+#             */
-/*   Updated: 2023/02/03 21:48:23 by lmedeiro         ###   ########.fr       */
+/*   Updated: 2023/02/05 19:46:10 by luanny           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-//No server é de mandar o sinal, aqui no client recebe-se o sinal. Essa parte é do
-//bônus (signal_receive), que ele manda a confirmação que a msg foi recebida. 
-
 #include "../includes/minitalk.h"
-
-//vai mandar o a msg pro cliente
 
 void	error(char *message)
 {
@@ -23,37 +18,40 @@ void	error(char *message)
 	exit(EXIT_FAILURE);
 }
 
+// o programa vai executar essa função quando receber o sinal do client.
 static void	print_signal(int signal, siginfo_t *info, void *ucontext)
 {
-	static int	shift_bits;
-	static char	letter;
+	static int	shift_bits; //conta os bits deslocados
+	static char	letter; //armazena o caracter
 
-	// o caracter ´eum arary que recebe 0 e 1. o shift bit seria um miniarray. 
-// se o if fosse de zero, nao faira diferença, no caso seria o sigusr2.
+	// o caracter é um array que recebe 0 e 1. Q shift bit seria um miniarray. 
+    // se o if fosse de zero, nao faria diferença, no caso seria o sigusr2.
 	(void)ucontext;
 	if (signal == SIGUSR1)
 		letter += (0b00000001 << shift_bits); //o letter é um caracter só.
-	if (shift_bits == 7) //verifica se chegou na ultima osição, significa qu eo carcater ta completo. //AQUI JÁ RECEU OS 8 BITS DO CARCATER E ENTRE AQUI. 
+	if (shift_bits == 7) //verifica se chegou na ultima posição, significa que o carcater ta completo. Já recebeu os 8 bits do caracter e entra aqui. 
 	{
-		if (letter) //se for uma letra normal, ele imprime. se nao, entra no else de baixo, pq terminou a msg. é raba zaero. 
+		if (letter) //se for uma letra normal, ele imprime. se nao, entra no else de baixo, pq terminou a msg. É o barra zero. 
 			ft_putchar_fd(letter, 1);
 		else
 		{
-			if (kill(info->si_pid, SIGUSR2)) // aqui siginifica qu etemrinou a msg toda. pq o '\0' é giaul a zero que é o sigusr2;
+			if (kill(info->si_pid, SIGUSR2)) // aqui terminou a msg toda. pq o '\0' é igual a zero que é o sigusr2;
 				error("Failed to send signal.\n");
 		}	
-		letter = 0;
+		letter = 0; // para setar a variável e começar a letura dos 8 bits novamente, sem que haja sobreposição das letras. Mesmo coisa na linha abaixo.
 		shift_bits = 0;
 	}
 	else
 		shift_bits++;
-	if (kill(info->si_pid, SIGUSR1)) //os if (verifica se chegou o sinal) e o kill junto fazem um preocesos juntos. o client espera receber o sinal que foi recebido. TRATAMENTO DE ERRO
+	if (kill(info->si_pid, SIGUSR1)) //os if (verifica se chegou o sinal) e o kill fazem o preoceso juntos. O client espera receber o sinal que foi recebido. (TRATAMENTO DE ERRO)
 		error("Failed to send signal.\n");
 }
 
 int	main(void)
 {
 	struct sigaction	action;
+
+	///Se SA_SIGINFO for especificado em sa_flags , então deve ser usado sa_sigaction (em vez de sa_handler), que especifica a função de manipulação de sinal para sinal. Usa 3 parametros, não só um.
 
 	ft_bzero(&action, sizeof (struct sigaction));
 	action.sa_flags = SA_SIGINFO;
@@ -62,7 +60,7 @@ int	main(void)
 		error("Failed to configure signal function.\n");
 	if (sigaction(SIGUSR2, &action, NULL))
 		error("Failed to configure signal function.\n");
-	printf("PID: %d\n", (int)getpid());
+	ft_printf("PID: %d\n", (int)getpid());
 	while (1)
 		pause();
 	return (0);
